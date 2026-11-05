@@ -1,6 +1,6 @@
 // 兒童英漢字典：離線快取
 // 更新網站內容時，把 VERSION 改成新的值，手機下次打開就會換成新版。
-const VERSION = "1.2.0";
+const VERSION = "1.2.1";
 const CACHE = `kiddict-${VERSION}`;
 const FILES = [
   "./",
@@ -14,7 +14,12 @@ const FILES = [
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: "reload"：直接向網站要最新檔案，不用瀏覽器暫存（GitHub Pages 會讓瀏覽器暫存 10 分鐘）
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(FILES.map(url => new Request(url, { cache: "reload" }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", event => {
@@ -32,7 +37,7 @@ self.addEventListener("fetch", event => {
   // 頁面：先試網路（拿到最新版），沒網路就用快取
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-cache" })
         .then(res => {
           const copy = res.clone();
           caches.open(CACHE).then(cache => cache.put("./index.html", copy));

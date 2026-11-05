@@ -180,11 +180,57 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
 /* 下方分頁 */
 .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
-.tabbar .in { max-width: 540px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+.tabbar .in { max-width: 540px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
 .tab { border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 0; min-height: 56px; justify-content: center; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; border-radius: 12px; }
 .tab .ti { font-size: 24px; line-height: 1.2; filter: grayscale(1); opacity: .7; }
 .tab.on { color: var(--sky); }
 .tab.on .ti { filter: none; opacity: 1; }
+
+/* 測驗 */
+.quiz-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.progress { height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+.quiz-prompt { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.quiz-ask { color: var(--muted); font-weight: 700; }
+.quiz-zh { font-size: 34px; font-weight: 900; line-height: 1.35; }
+.quiz-zh .pos-inline { font-size: 20px; }
+.quiz-audio { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.blanks { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.blank { min-width: 30px; height: 44px; border-bottom: 3px solid var(--line); font-family: var(--font-en); font-size: 28px; font-weight: 800; display: grid; place-items: end center; padding-bottom: 2px; }
+.blank.filled { border-color: var(--accent); }
+.blank.sym { border-color: transparent; color: var(--muted); }
+.hint { color: var(--muted); font-size: 14px; }
+.answer { width: 100%; font-family: var(--font-en); font-size: 34px; font-weight: 700; text-align: center; letter-spacing: .04em; padding: 14px 12px 10px; border-radius: 18px; border: 3px solid var(--line); background: var(--surface); color: var(--ink); }
+.answer:focus { border-color: var(--accent); outline: none; }
+.answer::placeholder { font-family: var(--font-zh); font-size: 18px; font-weight: 500; letter-spacing: 0; color: var(--muted); }
+.btn.next { width: 100%; scroll-margin-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.feedback { border-radius: 22px; border: 2px solid var(--line); padding: 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.feedback.good { background: var(--leaf-soft); border-color: var(--leaf); }
+.feedback.bad { background: var(--accent-soft); border-color: var(--accent); }
+.fb-title { font-size: 26px; font-weight: 900; }
+.feedback.good .fb-title { color: var(--leaf); }
+.feedback.bad .fb-title { color: var(--accent); }
+.fb-label { font-size: 14px; font-weight: 700; color: var(--muted); }
+.fb-zh { font-size: 18px; font-weight: 700; }
+.feedback .tiles { padding-block: 4px; }
+.feedback .tiles .tile { width: 44px; height: 52px; font-size: 28px; background: var(--surface); }
+.answer.good { border-color: var(--leaf); color: var(--leaf); }
+.answer.bad { border-color: var(--accent); color: var(--accent); }
+.tally { font-variant-numeric: tabular-nums; }
+.tally .ok { color: var(--leaf); }
+.tally .no { color: var(--accent); }
+.score { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 22px 18px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.score .num { font-family: var(--font-en); font-size: 64px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .msg { font-size: 20px; font-weight: 900; }
+.mark { font-size: 22px; font-weight: 900; width: 24px; text-align: center; flex: none; }
+.mark.ok { color: var(--leaf); }
+.mark.no { color: var(--accent); }
+.res-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.res-main .zh { white-space: normal; }
+.yours { font-family: var(--font-en); font-size: 17px; color: var(--accent); }
+.yours s { text-decoration-thickness: 2px; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.tbtn:disabled, .row:disabled { opacity: .45; cursor: default; }
 
 @media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile.active { transform: none; } }
 @media (max-width: 360px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tile { width: 44px; height: 52px; font-size: 28px; } }
@@ -196,6 +242,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 <nav class="tabbar" aria-label="分頁"><div class="in">
   <button class="tab" data-tab="search" id="tab-search"><span class="ti">🔍</span>查字</button>
   <button class="tab" data-tab="book" id="tab-book"><span class="ti">📚</span>單字本</button>
+  <button class="tab" data-tab="quiz" id="tab-quiz"><span class="ti">✍️</span>測驗</button>
   <button class="tab" data-tab="settings" id="tab-settings"><span class="ti">⚙️</span>設定</button>
 </div></nav>
 
@@ -203,6 +250,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 (async () => {
   "use strict";
   const DATA_URL = "data/dict-v1.json";
+  const APP_VERSION = "1.2.1";   // 和 sw.js 的 VERSION 一致
   // ---------- 資料 ----------
   const app0 = document.getElementById("app");
   app0.innerHTML = `<div class="loading"><span class="big">📖</span>字典載入中…<br><span class="note">第一次打開需要下載約 1 MB，之後就能離線使用</span></div>`;
@@ -237,7 +285,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     get(k, d) { try { const v = localStorage.getItem("kd." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem("kd." + k, JSON.stringify(v)); } catch {} },
   };
-  const settings = Object.assign({ accent: "en-US", letterMode: "lower", speed: "mid", repeat: 1 }, store.get("settings", {}));
+  const settings = Object.assign({ accent: "en-US", letterMode: "lower", speed: "mid", repeat: 1, quizType: "audio", quizHint: true, quizInstant: false }, store.get("settings", {}));
   // 拼字速度三段：rate＝說話速度，pause＝字母之間停幾秒
   const SPEEDS = {
     slow: { label: "慢", rate: 0.8, pause: 0.45 },
@@ -268,6 +316,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   }
   let favs = store.get("favs", []);
   let history = store.get("history", []);
+  let mistakes = store.get("mistakes", []);
   const saveSettings = () => store.set("settings", settings);
 
   // ---------- 語音 ----------
@@ -349,7 +398,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   }
 
   // ---------- 狀態與路由 ----------
-  const state = { tab: "search", stack: { search: [], book: [], settings: [] }, query: "", basicOnly: false, playing: false };
+  const state = { tab: "search", stack: { search: [], book: [], quiz: [], settings: [] }, quiz: null, query: "", basicOnly: false, playing: false };
   const top = () => state.stack[state.tab].at(-1);
   function go(page) { Speech.stop(); state.playing = false; state.stack[state.tab].push(page); render(); window.scrollTo(0, 0); }
   function back() { Speech.stop(); state.playing = false; state.stack[state.tab].pop(); render(); }
@@ -366,8 +415,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     const p = top();
     if (p?.type === "word") return renderWord(p);
     if (p?.type === "list") return renderList(p);
+    if (p?.type === "quiz") return renderQuiz();
+    if (p?.type === "result") return renderResult();
     if (state.tab === "search") return renderSearch();
     if (state.tab === "book") return renderBook();
+    if (state.tab === "quiz") return renderQuizHome();
     return renderSettings();
   }
 
@@ -517,6 +569,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <div class="list">
           <button class="row" data-kind="fav"><span class="en">⭐</span><span class="zh" style="color:var(--ink);font-weight:700">我的收藏</span><span class="pill">${favs.length}</span></button>
           <button class="row" data-kind="history"><span class="en">🕘</span><span class="zh" style="color:var(--ink);font-weight:700">最近查過</span><span class="pill">${history.length}</span></button>
+          <button class="row" data-kind="mistakes"><span class="en">❌</span><span class="zh" style="color:var(--ink);font-weight:700">錯題本</span><span class="pill">${mistakes.length}</span></button>
         </div>
         <div class="section-title">字表</div>
         <div class="list">${LEVELS.map(l => `<button class="row" data-kind="level" data-bit="${l.bit}"><span class="en">${l.emo}</span><span class="zh" style="color:var(--ink);font-weight:700">${l.name}<br><span class="note">${l.desc}</span></span><span class="pill">${WORDS.filter(e => e.lv & l.bit).length}</span></button>`).join("")}</div>
@@ -532,6 +585,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     if (p.kind === "topic") { const t = TOPIC_BY_ID.get(p.id); return { emo: t.emoji, title: t.name, words: topicWords(p.id) }; }
     if (p.kind === "level") { const l = LEVELS.find(l => l.bit === p.bit); return { emo: l.emo, title: l.name, words: SORTED.filter(e => e.lv & l.bit) }; }
     if (p.kind === "fav") return { emo: "⭐", title: "我的收藏", words: favs.map(w => BY_LC.get(w.toLowerCase())).filter(Boolean) };
+    if (p.kind === "mistakes") return { emo: "❌", title: "錯題本", words: mistakes.map(w => BY_LC.get(w.toLowerCase())).filter(Boolean) };
     return { emo: "🕘", title: "最近查過", words: history.map(w => BY_LC.get(w.toLowerCase())).filter(Boolean) };
   }
   function renderList(p) {
@@ -543,6 +597,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <div class="listhead"><span class="emo">${info.emo}</span><div><div class="t">${esc(info.title)}</div><div class="s">${words.length} 個字</div></div></div>
         <div class="toolbar">
           <button class="tbtn primary" id="play" ${words.length ? "" : "disabled"}>▶︎ 連續播放</button>
+          <button class="tbtn" id="quizthis" ${words.length ? "" : "disabled"}>✍️ 測驗這組</button>
           ${showFilter ? `<button class="tbtn ${state.basicOnly ? "on" : ""}" id="basic">${state.basicOnly ? "✓ " : ""}只看 🟢 基本</button>` : ""}
         </div>
         <div id="player" class="player" hidden></div>
@@ -551,6 +606,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       </div>`;
     document.getElementById("back").onclick = back;
     const basic = document.getElementById("basic");
+    document.getElementById("quizthis").onclick = () => { Speech.stop(); state.playing = false; startQuiz({ emo: info.emo, title: info.title, words }); };
     if (basic) basic.onclick = () => { state.basicOnly = !state.basicOnly; Speech.stop(); state.playing = false; render(); };
     const playBtn = document.getElementById("play"), player = document.getElementById("player");
     const stopPlay = () => { Speech.stop(); state.playing = false; playBtn.textContent = "▶︎ 連續播放"; player.hidden = true; document.querySelectorAll(".row.playing").forEach(r => r.classList.remove("playing")); };
@@ -573,6 +629,205 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       Speech.run(steps, stopPlay);
     };
     document.getElementById("rows").onclick = ev => { const t = ev.target.closest("[data-word]"); if (t) { stopPlay(); openWord(t.dataset.word); } };
+  }
+
+
+  // ---------- 測驗 ----------
+  const QUIZ_SIZE = 10;
+  const QUIZ_TYPES = [
+    { key: "audio", label: "🔊 聽發音" },
+    { key: "zh", label: "📖 看中文" },
+    { key: "both", label: "🔊＋📖" },
+  ];
+  const normAnswer = s => String(s || "").toLowerCase().replace(/[’‘`]/g, "'").replace(/\s+/g, " ").trim();
+  const lettersOnly = s => normAnswer(s).replace(/[^\p{L}]/gu, "");
+  const isCorrect = (answer, word) => normAnswer(answer) === normAnswer(word) || (lettersOnly(answer) !== "" && lettersOnly(answer) === lettersOnly(word));
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function sayWord(w, slow) { Speech.run([{ text: w, lang: settings.accent, rate: slow ? 0.6 : speed().rate }]); }
+
+  // src = { emo, title, words }；replace=true 時取代目前頁面（從結果頁重考）
+  function startQuiz(src, replace = false) {
+    const pool = src.words.filter(e => [...e.w].some(isLetter));
+    if (!pool.length) return;
+    const picked = shuffle([...pool]).slice(0, QUIZ_SIZE);
+    state.quiz = { emo: src.emo, title: src.title, type: settings.quizType, hint: settings.quizHint, instant: settings.quizInstant,
+                   pool, items: picked.map(e => ({ e, answer: "" })), idx: 0, played: {} };
+    if (replace) state.stack[state.tab].pop();
+    go({ type: "quiz" });
+  }
+
+  function blanksHTML(word, typed) {
+    const t = [...(typed || "")].filter(isLetter);
+    let k = 0;
+    return [...word].map(ch => {
+      if (!isLetter(ch)) return `<span class="blank sym">${ch === " " ? "&nbsp;" : esc(ch)}</span>`;
+      const c = t[k++] || "";
+      return `<span class="blank${c ? " filled" : ""}">${esc(c)}</span>`;
+    }).join("");
+  }
+
+  function renderQuiz() {
+    const qz = state.quiz;
+    if (!qz) { state.stack[state.tab].pop(); return render(); }
+    const item = qz.items[qz.idx], e = item.e;
+    const last = qz.idx === qz.items.length - 1;
+    const showAudio = qz.type !== "zh", showZh = qz.type !== "audio";
+    const pos = e.senses.length === 1 ? `<span class="pos-inline">${esc(e.senses[0][0])}</span>` : "";
+    const count = [...e.w].filter(isLetter).length;
+    app.innerHTML = `${bar(`${qz.emo} ${esc(qz.title)}`, { backBtn: true })}
+      <div class="view">
+        <div class="quiz-top"><span>第 ${qz.idx + 1} / ${qz.items.length} 題</span>${qz.instant
+          ? `<span class="tally"><span class="ok">✓ ${qz.items.filter(it => it.checked && it.ok).length}</span>　<span class="no">✗ ${qz.items.filter(it => it.checked && !it.ok).length}</span></span>`
+          : `<span class="note">不限時間，慢慢想</span>`}</div>
+        <div class="progress"><div style="width:${(qz.idx / qz.items.length) * 100}%"></div></div>
+        <section class="quiz-prompt">
+          <div class="quiz-ask">${showZh ? "這個中文的英文怎麼拼？" : "聽聽看，這是哪個字？"}</div>
+          ${showZh ? `<div class="quiz-zh">${pos}${esc(e.zh)}</div>` : ""}
+          ${showAudio ? `<div class="quiz-audio">
+              <button class="btn say" id="qsay"><span class="ico">🔊</span>再聽一次</button>
+              <button class="btn slow" id="qslow"><span class="ico">🐢</span>慢速</button>
+            </div>` : ""}
+          ${qz.hint ? `<div class="blanks" id="blanks">${blanksHTML(e.w, item.answer)}</div><div class="hint">提示：${count} 個字母</div>` : ""}
+        </section>
+        <input id="ans" class="answer${item.checked ? (item.ok ? " good" : " bad") : ""}" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               enterkeyhint="${last ? "done" : "next"}" placeholder="在這裡拼出英文" value="${esc(item.answer)}" aria-label="輸入答案" ${item.checked ? "readonly" : ""}>
+        ${item.checked ? `<section class="feedback ${item.ok ? "good" : "bad"}" aria-live="polite">
+            <div class="fb-title">${item.ok ? "✓ 答對了！" : "✗ 差一點點"}</div>
+            ${item.ok ? "" : `<div class="yours">你寫：${item.answer.trim() ? `<s>${esc(item.answer.trim())}</s>` : "（沒有寫）"}</div>`}
+            <div class="fb-label">正確拼法</div>
+            ${tilesHTML(e.w, "fbtiles")}
+            <div class="fb-zh">${esc(e.zh)}</div>
+            <button class="tbtn" id="fbspell">🔤 再拼一次</button>
+          </section>` : ""}
+        <button class="btn spell next" id="next">${qz.instant && !item.checked ? "看答案 ✓" : last ? "完成，看結果 ✓" : "下一題 →"}</button>
+      </div>`;
+    const ans = document.getElementById("ans");
+    ans.addEventListener("input", () => {
+      item.answer = ans.value;
+      const box = document.getElementById("blanks"); if (box) box.innerHTML = blanksHTML(e.w, item.answer);
+    });
+    const spellAnswer = () => Speech.run(spellSteps(e.w, "fbtiles"), () => setTiles("fbtiles", "none"));
+    const nextQ = () => {
+      if (!item.checked) item.answer = ans.value;
+      Speech.stop();
+      if (qz.instant && !item.checked) {
+        item.checked = true;
+        item.ok = isCorrect(item.answer, e.w);
+        const y = window.scrollY;
+        render();
+        window.scrollTo(0, y);
+        // 答錯：逐字母拼一次；答對：唸一次整個字
+        if (item.ok) sayWord(e.w, false); else Speech.run(spellSteps(e.w, "fbtiles"), () => setTiles("fbtiles", "none"));
+        const nb = document.getElementById("next");
+        if (nb) {
+          const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          nb.scrollIntoView({ block: "end", behavior: smooth ? "smooth" : "auto" });
+          nb.focus({ preventScroll: true });
+        }
+        return;
+      }
+      if (last) return finishQuiz();
+      qz.idx++;
+      render();
+    };
+    ans.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); nextQ(); } });
+    document.getElementById("next").onclick = nextQ;
+    document.getElementById("back").onclick = () => { state.quiz = null; back(); };
+    if (showAudio) {
+      document.getElementById("qsay").onclick = () => sayWord(e.w, false);
+      document.getElementById("qslow").onclick = () => sayWord(e.w, true);
+      if (!qz.played[qz.idx] && !item.checked) { qz.played[qz.idx] = true; sayWord(e.w, false); }   // 每題出現時自動唸一次
+    }
+    app.onclick = null;
+    const fb = document.getElementById("fbspell");
+    if (fb) fb.onclick = spellAnswer;
+    if (!item.checked) { try { ans.focus({ preventScroll: true }); } catch {} }
+  }
+
+  function finishQuiz() {
+    const qz = state.quiz;
+    qz.items.forEach(it => { it.ok = isCorrect(it.answer, it.e.w); });
+    // 錯題本：答錯加入、答對移除
+    const wrong = qz.items.filter(it => !it.ok).map(it => it.e.w);
+    const right = new Set(qz.items.filter(it => it.ok).map(it => it.e.w));
+    mistakes = [...wrong, ...mistakes.filter(w => !wrong.includes(w) && !right.has(w))].slice(0, 200);
+    store.set("mistakes", mistakes);
+    state.stack[state.tab].pop();
+    state.stack[state.tab].push({ type: "result" });
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  function renderResult() {
+    const qz = state.quiz;
+    if (!qz) { state.stack[state.tab].pop(); return render(); }
+    const total = qz.items.length, n = qz.items.filter(it => it.ok).length;
+    const wrongWords = qz.items.filter(it => !it.ok).map(it => it.e);
+    const msg = n === total ? "🏆 全對！太厲害了" : n >= total * 0.8 ? "🌟 很棒！" : n >= total * 0.5 ? "👍 不錯，再加油" : "💪 多練習幾次就會了";
+    app.innerHTML = `${bar(`${qz.emo} ${esc(qz.title)}`, { backBtn: true })}
+      <div class="view">
+        <section class="score"><div class="num">${n} / ${total}</div><div class="msg">${msg}</div>
+          ${wrongWords.length ? `<div class="note">答錯的字已經放進「❌ 錯題本」，下次可以再考。</div>` : ""}</section>
+        <div class="stack">
+          ${wrongWords.length ? `<button class="btn spell" id="retrywrong">只考錯的 ${wrongWords.length} 題</button>` : ""}
+          <button class="tbtn" id="retry" style="justify-content:center">🔁 再考一次（換新題目）</button>
+        </div>
+        <div class="section-title">每一題</div>
+        <div class="list" id="resrows">${qz.items.map(it => `
+          <button class="row" data-word="${esc(it.e.w)}">
+            <span class="mark ${it.ok ? "ok" : "no"}">${it.ok ? "✓" : "✗"}</span>
+            <span class="res-main"><span class="en">${esc(it.e.w)}</span>
+              <span class="zh">${esc(it.e.zh)}</span>
+              ${it.ok ? "" : `<span class="yours">你寫：${it.answer.trim() ? `<s>${esc(it.answer.trim())}</s>` : "（沒有寫）"}</span>`}
+            </span>
+          </button>`).join("")}</div>
+        <p class="note">點任何一個字，可以聽發音、看它怎麼拼。</p>
+      </div>`;
+    document.getElementById("back").onclick = () => { state.quiz = null; back(); };
+    document.getElementById("retry").onclick = () => startQuiz({ emo: qz.emo, title: qz.title, words: qz.pool }, true);
+    const rw = document.getElementById("retrywrong");
+    if (rw) rw.onclick = () => startQuiz({ emo: qz.emo, title: `${qz.title}（錯題）`, words: wrongWords }, true);
+    app.onclick = ev => { const t = ev.target.closest("[data-word]"); if (t) openWord(t.dataset.word); };
+  }
+
+  // 測驗分頁：選題型、選範圍
+  function renderQuizHome() {
+    const life = TOPICS.filter(t => t.group === "life"), gram = TOPICS.filter(t => t.group === "grammar");
+    const mine = [
+      { kind: "history", emo: "🕘", title: "最近查過", n: history.length },
+      { kind: "fav", emo: "⭐", title: "我的收藏", n: favs.length },
+      { kind: "mistakes", emo: "❌", title: "錯題本", n: mistakes.length },
+    ];
+    app.innerHTML = `${bar("測驗")}
+      <div class="view">
+        <section class="card setting">
+          <label>題目怎麼出</label>
+          <div class="seg seg3" id="qtype">${QUIZ_TYPES.map(q => `<button data-qtype="${q.key}" class="${settings.quizType === q.key ? "on" : ""}">${q.label}</button>`).join("")}</div>
+          <label>字母數提示</label>
+          <div class="seg" id="qhint"><button data-qhint="1" class="${settings.quizHint ? "on" : ""}">顯示格子</button><button data-qhint="0" class="${settings.quizHint ? "" : "on"}">不顯示</button></div>
+          <label>什麼時候看對錯</label>
+          <div class="seg" id="qinstant"><button data-qinstant="0" class="${settings.quizInstant ? "" : "on"}">全部做完再看</button><button data-qinstant="1" class="${settings.quizInstant ? "on" : ""}">每題馬上看</button></div>
+          <div class="note">每組 ${QUIZ_SIZE} 題，不限時間。聽發音的題目可以一直重聽。選「每題馬上看」時，按「看答案」會先顯示對錯和正確拼法，答錯會拼一次給你聽，再按「下一題」繼續。</div>
+        </section>
+        <div class="section-title">從我的單字出題</div>
+        <div class="list">${mine.map(m => `<button class="row" data-kind="${m.kind}" ${m.n ? "" : "disabled"}><span class="en">${m.emo}</span><span class="zh" style="color:var(--ink);font-weight:700">${m.title}</span><span class="pill">${m.n}</span></button>`).join("")}</div>
+        <div class="section-title">從主題出題</div>
+        <div class="grid">${life.map(topicTile).join("")}</div>
+        <details class="group"><summary>文法小類（${gram.length} 類）</summary><div class="grid small">${gram.map(topicTile).join("")}</div></details>
+        <div class="section-title">從字表出題</div>
+        <div class="list">${LEVELS.map(l => `<button class="row" data-kind="level" data-bit="${l.bit}"><span class="en">${l.emo}</span><span class="zh" style="color:var(--ink);font-weight:700">${l.name}</span><span class="pill">${WORDS.filter(e => e.lv & l.bit).length}</span></button>`).join("")}</div>
+      </div>`;
+    app.onclick = ev => {
+      const qt = ev.target.closest("[data-qtype]");
+      if (qt) { settings.quizType = qt.dataset.qtype; saveSettings(); document.querySelectorAll("[data-qtype]").forEach(x => x.classList.toggle("on", x === qt)); return; }
+      const qh = ev.target.closest("[data-qhint]");
+      if (qh) { settings.quizHint = qh.dataset.qhint === "1"; saveSettings(); document.querySelectorAll("[data-qhint]").forEach(x => x.classList.toggle("on", x === qh)); return; }
+      const qi = ev.target.closest("[data-qinstant]");
+      if (qi) { settings.quizInstant = qi.dataset.qinstant === "1"; saveSettings(); document.querySelectorAll("[data-qinstant]").forEach(x => x.classList.toggle("on", x === qi)); return; }
+      const t = ev.target.closest("[data-topic],[data-kind]"); if (!t || t.disabled) return;
+      const desc = t.dataset.topic ? { kind: "topic", id: +t.dataset.topic } : { kind: t.dataset.kind, bit: +t.dataset.bit || 0 };
+      startQuiz(listInfo(desc));
+    };
   }
 
   // 設定
@@ -608,7 +863,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <section class="card">
           <b>資料來源</b>
           <p class="note" style="margin:0">教育部「國民中小學英語文參考字彙」2000 字、國中單字王 2000 題庫（114 年版）、全民英檢初級字表（LTTC，僅標示級別）、<a href="https://github.com/skywind3000/ECDICT" target="_blank" rel="noopener">ECDICT</a> 開源英漢字典（MIT 授權，<a href="LICENSE-ECDICT.txt" target="_blank">授權條款</a>）。</p>
-          <p class="note" style="margin:0">版本 1.0　·　收錄 ${WORDS.length.toLocaleString()} 字</p>
+          <p class="note" style="margin:0">版本 ${APP_VERSION}　·　收錄 ${WORDS.length.toLocaleString()} 字</p>
+          <button class="tbtn" id="checkupdate" style="justify-content:center">🔄 檢查更新</button>
+          <p class="note" style="margin:0">網站更新後，如果手機上還是舊版，按這個按鈕就會換成最新版。</p>
         </section>
       </div>`;
     app.onclick = ev => {
@@ -619,6 +876,20 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     };
     bindSpeedSeg("speedseg2");
     bindRepeatSeg("repeatseg2");
+    const cu = document.getElementById("checkupdate");
+    if (cu) cu.onclick = async () => {
+      cu.disabled = true; cu.textContent = "檢查中…";
+      try {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        if (reg) {
+          await reg.update();
+          if (reg.installing || reg.waiting) {
+            await new Promise(res => { navigator.serviceWorker.addEventListener("controllerchange", res, { once: true }); setTimeout(res, 5000); });
+          }
+        }
+      } catch {}
+      location.reload();
+    };
     document.getElementById("test").onclick = () => {
       const box = document.getElementById("ttiles"); box.outerHTML = tilesHTML("apple", "ttiles");
       Speech.run(spellSteps("apple", "ttiles"), () => setTiles("ttiles", "none"));
