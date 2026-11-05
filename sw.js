@@ -1,6 +1,6 @@
 // 兒童英漢字典：離線快取
 // 更新網站內容時，把 VERSION 改成新的值，手機下次打開就會換成新版。
-const VERSION = "1.0.0";
+const VERSION = "1.2.0";
 const CACHE = `kiddict-${VERSION}`;
 const FILES = [
   "./",

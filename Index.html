@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>兒童英漢字典</title>
+<meta name="description" content="給國小孩子用的英漢字典：查中文、聽發音、逐字母拼讀，可離線使用。">
+<meta name="theme-color" content="#EEF3FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1422" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="英漢字典">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+/* 版面：手機單欄 App 外觀，上方固定標題列、下方三個分頁；英文用系統圓體，中文用蘋方（離線也能正常顯示） */
+:root {
+  --bg: #EEF3FA;
+  --surface: #FFFFFF;
+  --surface-2: #F6F8FC;
+  --ink: #17203B;
+  --muted: #5B6584;
+  --line: #D9E0EC;
+  --accent: #FF7417;      /* 唸到的字母 */
+  --accent-soft: #FFE6D3;
+  --sky: #2D6BE6;         /* 主要按鈕 */
+  --sky-soft: #DCE7FC;
+  --leaf: #17905A;        /* 基本 1200 */
+  --leaf-soft: #D9F2E6;
+  --amber: #A86F00;       /* 進階 2000 */
+  --amber-soft: #FBEDCB;
+  --blue: #3756C8;        /* 英檢初級 */
+  --blue-soft: #E0E6FA;
+  --star: #E8A600;
+  --shadow: 0 1px 2px rgba(23,32,59,.06), 0 4px 14px rgba(23,32,59,.06);
+  --font-en: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", system-ui, sans-serif;
+  --font-zh: "PingFang TC", "Heiti TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --radius: 18px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1422; --surface: #192033; --surface-2: #1F2740; --ink: #EDF1FA; --muted: #A2ACC6; --line: #2C3550;
+  --accent: #FF8A3A; --accent-soft: #4A2A14; --sky: #6F9BFF; --sky-soft: #22325A;
+  --leaf: #4FCB8F; --leaf-soft: #173B2B; --amber: #F2BC45; --amber-soft: #3E3116; --blue: #8EA6FF; --blue-soft: #262F5A;
+  --star: #FFC93A; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F1422; --surface: #192033; --surface-2: #1F2740; --ink: #EDF1FA; --muted: #A2ACC6; --line: #2C3550;
+  --accent: #FF8A3A; --accent-soft: #4A2A14; --sky: #6F9BFF; --sky-soft: #22325A;
+  --leaf: #4FCB8F; --leaf-soft: #173B2B; --amber: #F2BC45; --amber-soft: #3E3116; --blue: #8EA6FF; --blue-soft: #262F5A;
+  --star: #FFC93A; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+html { color-scheme: light; -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-zh); font-size: 16px; line-height: 1.55; -webkit-tap-highlight-color: transparent; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+.app { max-width: 540px; margin: 0 auto; min-height: 100%; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: env(safe-area-inset-top, 0px) calc(96px + env(safe-area-inset-bottom, 0px)); }
+.loading { padding: 120px 16px; text-align: center; color: var(--muted); font-size: 18px; }
+.loading .big { font-size: 48px; display: block; margin-bottom: 8px; }
+.ok { color: var(--leaf); font-weight: 700; }
+
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 10px; padding-block: 14px 10px; }
+.topbar h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: .02em; flex: 1; min-width: 0; text-wrap: balance; }
+.pill { font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px; white-space: nowrap; }
+.iconbtn { width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 22px; cursor: pointer; flex: none; }
+.iconbtn.on { color: var(--star); }
+
+.view { display: flex; flex-direction: column; gap: 18px; }
+.section-title { font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: .08em; margin: 6px 2px -6px; }
+
+/* 搜尋 */
+.search { position: relative; }
+.search input { width: 100%; font-family: var(--font-en); font-size: 30px; font-weight: 700; padding: 14px 52px 10px 18px; border-radius: var(--radius); border: 2px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.search input::placeholder { color: var(--muted); font-family: var(--font-zh); font-size: 20px; font-weight: 500; }
+.search .clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; font-size: 20px; color: var(--muted); cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--font-en); font-size: 20px; font-weight: 700; padding: 6px 16px 3px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+.chip.zh { font-family: var(--font-zh); font-size: 15px; padding: 6px 14px; }
+
+.list { display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; width: 100%; }
+.row:first-child { border-top: 0; }
+.row:active { background: var(--surface-2); }
+.row.playing { background: var(--accent-soft); }
+.row .en { font-family: var(--font-en); font-size: 24px; font-weight: 700; line-height: 1.2; }
+.row .zh { color: var(--muted); font-size: 15px; min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .from { font-size: 13px; color: var(--muted); }
+.badges { display: flex; gap: 4px; flex: none; }
+.b { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+.b1 { color: var(--leaf); background: var(--leaf-soft); }
+.b2 { color: var(--amber); background: var(--amber-soft); }
+.b4 { color: var(--blue); background: var(--blue-soft); }
+.empty { padding: 20px 16px; color: var(--muted); text-align: center; }
+
+/* 單字詳情 */
+.hero { background: var(--surface); border-radius: 24px; border: 1px solid var(--line); box-shadow: var(--shadow); padding: 22px 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+.word { font-family: var(--font-en); font-size: clamp(44px, 13vw, 64px); font-weight: 800; line-height: 1; letter-spacing: .01em; overflow-wrap: anywhere; }
+.phon { font-family: "Charis SIL", "Doulos SIL", "Lucida Grande", "Segoe UI", system-ui, sans-serif; color: var(--muted); font-size: 19px; }
+.metaline { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px; }
+.inflect { font-size: 14px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 6px 10px; }
+
+.tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding-block: 8px; }
+.tile { font-family: var(--font-en); font-weight: 800; font-size: 34px; line-height: 1; width: 52px; height: 60px; display: grid; place-items: center; padding-top: 6px; border-radius: 14px; background: var(--surface-2); border: 2px solid var(--line); transition: transform .18s ease, background-color .18s ease, color .18s ease; }
+.tile.sym { color: var(--muted); background: transparent; border-style: dashed; }
+.tiles.whole .tile:not(.sym) { background: var(--sky-soft); border-color: var(--sky); }
+.tile.active { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff; transform: scale(1.18); }
+.tile.done { color: var(--accent); }
+
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 60px; border-radius: 16px; border: 0; font-size: 20px; font-weight: 900; cursor: pointer; color: #fff; }
+.btn:active { transform: translateY(1px); }
+.btn.say { background: var(--sky); }
+.btn.slow { background: var(--leaf); }
+.btn.spell { background: var(--accent); grid-column: 1 / -1; font-size: 22px; }
+.btn.stop { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); grid-column: 1 / -1; min-height: 48px; font-size: 17px; }
+:root[data-theme="dark"] .btn.say, :root[data-theme="dark"] .btn.slow { color: #0F1422; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.say, :root:not([data-theme="light"]) .btn.slow { color: #0F1422; } }
+.btn .ico { font-size: 22px; }
+
+.card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.zh-main { font-size: 28px; font-weight: 900; line-height: 1.35; }
+.pos-inline { font-family: var(--font-en); font-weight: 700; color: var(--sky); font-size: 18px; margin-right: 10px; vertical-align: 3px; }
+.sense { display: flex; gap: 10px; align-items: baseline; font-size: 18px; }
+.sense .pos { font-family: var(--font-en); font-weight: 700; color: var(--sky); min-width: 44px; font-size: 16px; }
+details.fold { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--line); }
+details.fold summary { padding: 14px 18px; cursor: pointer; font-weight: 700; color: var(--muted); list-style: none; display: flex; justify-content: space-between; }
+details.fold summary::-webkit-details-marker { display: none; }
+details.fold summary::after { content: "＋"; }
+details.fold[open] summary::after { content: "－"; }
+details.fold .inner { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 6px; color: var(--ink); }
+details.fold .inner .src { font-size: 12px; color: var(--muted); }
+
+/* 單字本 */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.topic { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; min-height: 104px; }
+.topic:active { transform: scale(.98); }
+.topic .emo { font-size: 34px; line-height: 1.1; }
+.topic .nm { font-size: 15px; font-weight: 700; text-align: center; line-height: 1.3; }
+.topic .ct { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.grid.small .topic { min-height: 88px; }
+.grid.small .topic .emo { font-size: 26px; }
+details.group > summary { list-style: none; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: .08em; padding: 6px 2px; }
+details.group > summary::-webkit-details-marker { display: none; }
+details.group > summary::before { content: "▸ "; }
+details.group[open] > summary::before { content: "▾ "; }
+details.group > .grid { margin-top: 8px; }
+.listhead { display: flex; align-items: center; gap: 12px; }
+.listhead .emo { font-size: 44px; }
+.listhead .t { font-size: 26px; font-weight: 900; line-height: 1.2; }
+.listhead .s { color: var(--muted); font-size: 14px; }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+.tbtn { min-height: 48px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.tbtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tbtn.on { background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf); }
+.player { background: var(--surface); border: 2px solid var(--accent); border-radius: 22px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.player .pw { font-family: var(--font-en); font-weight: 800; font-size: 40px; line-height: 1; }
+.player .pz { font-size: 20px; font-weight: 700; }
+.player .tiles .tile { width: 42px; height: 50px; font-size: 28px; }
+
+/* 設定 */
+.setting { display: flex; flex-direction: column; gap: 8px; }
+.setting label { font-weight: 700; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border-radius: 14px; padding: 4px; gap: 4px; }
+.seg.seg3 { grid-template-columns: repeat(3, 1fr); }
+.speedrow { display: flex; align-items: center; gap: 12px; }
+.speedrow > span { font-weight: 700; color: var(--muted); white-space: nowrap; font-size: 15px; min-width: 4.2em; }
+.speedrow .seg { flex: 1; min-width: 0; }
+.seg button { min-height: 46px; border: 0; border-radius: 11px; background: transparent; font-weight: 700; cursor: pointer; }
+.seg button.on { background: var(--surface); box-shadow: var(--shadow); color: var(--sky); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.note { font-size: 14px; color: var(--muted); }
+.warn { background: var(--amber-soft); color: var(--ink); border-radius: 14px; padding: 12px 14px; font-size: 15px; }
+
+/* 下方分頁 */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabbar .in { max-width: 540px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+.tab { border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 0; min-height: 56px; justify-content: center; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; border-radius: 12px; }
+.tab .ti { font-size: 24px; line-height: 1.2; filter: grayscale(1); opacity: .7; }
+.tab.on { color: var(--sky); }
+.tab.on .ti { filter: none; opacity: 1; }
+
+/* 測驗 */
+.quiz-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.progress { height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+.quiz-prompt { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.quiz-ask { color: var(--muted); font-weight: 700; }
+.quiz-zh { font-size: 34px; font-weight: 900; line-height: 1.35; }
+.quiz-zh .pos-inline { font-size: 20px; }
+.quiz-audio { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.blanks { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.blank { min-width: 30px; height: 44px; border-bottom: 3px solid var(--line); font-family: var(--font-en); font-size: 28px; font-weight: 800; display: grid; place-items: end center; padding-bottom: 2px; }
+.blank.filled { border-color: var(--accent); }
+.blank.sym { border-color: transparent; color: var(--muted); }
+.hint { color: var(--muted); font-size: 14px; }
+.answer { width: 100%; font-family: var(--font-en); font-size: 34px; font-weight: 700; text-align: center; letter-spacing: .04em; padding: 14px 12px 10px; border-radius: 18px; border: 3px solid var(--line); background: var(--surface); color: var(--ink); }
+.answer:focus { border-color: var(--accent); outline: none; }
+.answer::placeholder { font-family: var(--font-zh); font-size: 18px; font-weight: 500; letter-spacing: 0; color: var(--muted); }
+.btn.next { width: 100%; scroll-margin-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.feedback { border-radius: 22px; border: 2px solid var(--line); padding: 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.feedback.good { background: var(--leaf-soft); border-color: var(--leaf); }
+.feedback.bad { background: var(--accent-soft); border-color: var(--accent); }
+.fb-title { font-size: 26px; font-weight: 900; }
+.feedback.good .fb-title { color: var(--leaf); }
+.feedback.bad .fb-title { color: var(--accent); }
+.fb-label { font-size: 14px; font-weight: 700; color: var(--muted); }
+.fb-zh { font-size: 18px; font-weight: 700; }
+.feedback .tiles { padding-block: 4px; }
+.feedback .tiles .tile { width: 44px; height: 52px; font-size: 28px; background: var(--surface); }
+.answer.good { border-color: var(--leaf); color: var(--leaf); }
+.answer.bad { border-color: var(--accent); color: var(--accent); }
+.tally { font-variant-numeric: tabular-nums; }
+.tally .ok { color: var(--leaf); }
+.tally .no { color: var(--accent); }
+.score { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 22px 18px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.score .num { font-family: var(--font-en); font-size: 64px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .msg { font-size: 20px; font-weight: 900; }
+.mark { font-size: 22px; font-weight: 900; width: 24px; text-align: center; flex: none; }
+.mark.ok { color: var(--leaf); }
+.mark.no { color: var(--accent); }
+.res-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.res-main .zh { white-space: normal; }
+.yours { font-family: var(--font-en); font-size: 17px; color: var(--accent); }
+.yours s { text-decoration-thickness: 2px; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.tbtn:disabled, .row:disabled { opacity: .45; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile.active { transform: none; } }
+@media (max-width: 360px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tile { width: 44px; height: 52px; font-size: 28px; } }
+</style>
+
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav class="tabbar" aria-label="分頁"><div class="in">
+  <button class="tab" data-tab="search" id="tab-search"><span class="ti">🔍</span>查字</button>
+  <button class="tab" data-tab="book" id="tab-book"><span class="ti">📚</span>單字本</button>
+  <button class="tab" data-tab="quiz" id="tab-quiz"><span class="ti">✍️</span>測驗</button>
+  <button class="tab" data-tab="settings" id="tab-settings"><span class="ti">⚙️</span>設定</button>
+</div></nav>
+
+<script>
+(async () => {
+  "use strict";
+  const DATA_URL = "data/dict-v1.json";
+  // ---------- 資料 ----------
+  const app0 = document.getElementById("app");
+  app0.innerHTML = `<div class="loading"><span class="big">📖</span>字典載入中…<br><span class="note">第一次打開需要下載約 1 MB，之後就能離線使用</span></div>`;
+  let RAW;
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    RAW = await res.json();
+  } catch (err) {
+    app0.innerHTML = `<div class="loading"><span class="big">📡</span>字典載入失敗。<br><span class="note">第一次使用需要連上網路。請確認網路後重新整理頁面。</span></div>`;
+    return;
+  }
+  const TOPICS = RAW.topics.map(([id, name, emoji, grp]) => ({ id, name, emoji, group: grp }));
+  const TOPIC_BY_ID = new Map(TOPICS.map(t => [t.id, t]));
+  const WORDS = RAW.words.map(([w, ph, zh, senses, lv, t, more, rank, forms]) =>
+    ({ w, lc: w.toLowerCase(), ph, zh, senses, lv, t, more: more ? more.split("\n") : [], rank, forms }));
+  const BY_LC = new Map();
+  WORDS.forEach(e => { if (!BY_LC.has(e.lc)) BY_LC.set(e.lc, e); });
+  const FORMS = RAW.forms;   // 變化形 → WORDS 的索引
+  const SORTED = [...WORDS].sort((a, b) => a.lc.localeCompare(b.lc));
+  const TOPIC_WORDS = new Map(TOPICS.map(t => [t.id, []]));
+  SORTED.forEach(e => e.t.forEach(id => TOPIC_WORDS.get(id)?.push(e)));
+  let offlineReady = false;
+  const LEVELS = [
+    { bit: 1, name: "基本 1200", short: "基本", emo: "🟢", desc: "國中小必學核心字（國小程度）" },
+    { bit: 2, name: "進階 2000", short: "2000", emo: "🟡", desc: "教育部 2000 字中的其他常用字" },
+    { bit: 4, name: "英檢初級", short: "英檢", emo: "🔵", desc: "全民英檢初級字表（2024 修訂版）" },
+  ];
+
+  // ---------- 本機儲存（失敗時照常運作）----------
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("kd." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("kd." + k, JSON.stringify(v)); } catch {} },
+  };
+  const settings = Object.assign({ accent: "en-US", letterMode: "lower", speed: "mid", repeat: 1, quizType: "audio", quizHint: true, quizInstant: false }, store.get("settings", {}));
+  // 拼字速度三段：rate＝說話速度，pause＝字母之間停幾秒
+  const SPEEDS = {
+    slow: { label: "慢", rate: 0.8, pause: 0.45 },
+    mid:  { label: "中", rate: 1.0, pause: 0.2 },
+    fast: { label: "快", rate: 1.15, pause: 0.0 },
+  };
+  const speed = () => SPEEDS[settings.speed] || SPEEDS.mid;
+  const speedSeg = id => `<div class="seg seg3" id="${id}" role="group" aria-label="拼字速度">${Object.entries(SPEEDS).map(([k, s]) => `<button data-speed="${k}" class="${settings.speed === k ? "on" : ""}">${s.label}</button>`).join("")}</div>`;
+  const REPEATS = [1, 2, 3];
+  const repeatSeg = id => `<div class="seg seg3" id="${id}" role="group" aria-label="拼幾遍">${REPEATS.map(n => `<button data-repeat="${n}" class="${settings.repeat === n ? "on" : ""}">${n} 遍</button>`).join("")}</div>`;
+  function bindRepeatSeg(id) {
+    const box = document.getElementById(id); if (!box) return;
+    box.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-repeat]"); if (!b) return;
+      ev.stopPropagation();
+      settings.repeat = +b.dataset.repeat; saveSettings();
+      box.querySelectorAll("[data-repeat]").forEach(x => x.classList.toggle("on", x === b));
+    });
+  }
+  function bindSpeedSeg(id) {
+    const box = document.getElementById(id); if (!box) return;
+    box.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-speed]"); if (!b) return;
+      ev.stopPropagation();
+      settings.speed = b.dataset.speed; saveSettings();
+      box.querySelectorAll("[data-speed]").forEach(x => x.classList.toggle("on", x === b));
+    });
+  }
+  let favs = store.get("favs", []);
+  let history = store.get("history", []);
+  let mistakes = store.get("mistakes", []);
+  const saveSettings = () => store.set("settings", settings);
+
+  // ---------- 語音 ----------
+  const Speech = (() => {
+    const ok = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+    let voices = [], token = 0; const keep = [];
+    const load = () => { if (ok) voices = speechSynthesis.getVoices(); };
+    if (ok) { load(); speechSynthesis.addEventListener?.("voiceschanged", () => { load(); if (state.tab === "settings") render(); }); }
+    const BAD = /compact|eloquence|bells|bubbles|cellos|jester|organ|trinoids|whisper|zarvox|bad news|good news|boing|albert|fred|junior|ralph|kathy|superstar|wobble|grandma|grandpa|reed|rocko|sandy|shelley|flo|eddy/i;
+    function voiceFor(lang) {
+      const norm = v => v.lang.replace("_", "-");
+      const exact = voices.filter(v => norm(v) === lang);
+      const score = v => (/premium|高品質/i.test(v.name) ? 4 : 0) + (/enhanced|增強/i.test(v.name) ? 3 : 0) + (v.localService ? 1 : 0) + (BAD.test(v.name) ? -10 : 0);
+      return exact.sort((a, b) => score(b) - score(a))[0] || voices.find(v => norm(v).startsWith(lang.slice(0, 2))) || null;
+    }
+    function run(steps, onDone) {
+      stop();
+      const my = ++token; let i = 0;
+      const next = () => {
+        if (my !== token) return;
+        if (i >= steps.length) { onDone && onDone(); return; }
+        const s = steps[i++];
+        if (!ok) { s.onStart && s.onStart(); setTimeout(next, 450 + (s.pause || 0) * 1000); return; }
+        const u = new SpeechSynthesisUtterance(s.text);
+        u.lang = s.lang; const v = voiceFor(s.lang); if (v) u.voice = v;
+        u.rate = s.rate || 1;
+        keep.push(u); if (keep.length > 60) keep.splice(0, keep.length - 60);
+        let fired = false;
+        const fin = () => { if (fired) return; fired = true; if (my === token) setTimeout(next, (s.pause || 0) * 1000); };
+        u.onstart = () => { if (my === token && s.onStart) s.onStart(); };
+        u.onend = fin; u.onerror = fin;
+        setTimeout(fin, 6000 + s.text.length * 350);
+        speechSynthesis.speak(u);
+      };
+      next();
+    }
+    function stop() { token++; if (ok) speechSynthesis.cancel(); }
+    return { ok, run, stop, voiceFor, list: () => voices };
+  })();
+
+  // ---------- 小工具 ----------
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const isLetter = ch => /\p{L}/u.test(ch);
+  const badges = lv => `<span class="badges">${LEVELS.filter(l => lv & l.bit).map(l => `<span class="b b${l.bit}">${l.short}</span>`).join("")}</span>`;
+  const tilesHTML = (w, id) => `<div class="tiles" id="${id}">${[...w].map((ch, i) => `<span class="tile${isLetter(ch) ? "" : " sym"}" data-i="${i}">${ch === " " ? "␣" : esc(ch)}</span>`).join("")}</div>`;
+  function setTiles(id, mode, index) {
+    const box = document.getElementById(id); if (!box) return;
+    box.classList.toggle("whole", mode === "word");
+    box.querySelectorAll(".tile").forEach(t => {
+      const i = +t.dataset.i;
+      t.classList.toggle("active", mode === "letter" && i === index);
+      t.classList.toggle("done", mode === "letter" && i < index && !t.classList.contains("sym"));
+    });
+  }
+  // 字母要送給語音的文字。大寫單一字母在某些 iPhone 聲音會被唸成「capital A」，所以預設用小寫。
+  const LETTER_NAMES = { a: "ay", b: "bee", c: "see", d: "dee", e: "ee", f: "ef", g: "gee", h: "aitch", i: "eye", j: "jay", k: "kay", l: "el", m: "em",
+    n: "en", o: "oh", p: "pee", q: "cue", r: "are", s: "ess", t: "tee", u: "you", v: "vee", w: "double you", x: "ex", y: "why", z: "zee" };
+  function letterText(ch) {
+    const lc = ch.toLowerCase();
+    if (settings.letterMode === "upper") return ch.toUpperCase();
+    if (settings.letterMode === "name") return lc === "z" && settings.accent === "en-GB" ? "zed" : (LETTER_NAMES[lc] || lc);
+    return lc;
+  }
+  // 拼讀：直接逐字母唸 a - p - p - l - e（連續播放時才先唸一次整字）
+  function spellSteps(w, tilesId, { sayWordFirst = false, pauseEnd = 0 } = {}) {
+    const lang = settings.accent, { rate, pause } = speed();
+    const steps = [];
+    const letters = [...w].map((ch, i) => [ch, i]).filter(([ch]) => isLetter(ch));
+    if (sayWordFirst || !letters.length) steps.push({ text: w, lang, rate, pause: 0.6, onStart: () => setTiles(tilesId, "word") });
+    const rounds = Math.max(1, Math.min(3, settings.repeat || 1));
+    for (let r = 0; r < rounds; r++) {
+      letters.forEach(([ch, i], k) => steps.push({
+        text: letterText(ch), lang, rate,
+        pause: k === letters.length - 1 ? (r < rounds - 1 ? 0.8 : pauseEnd) : pause,
+        onStart: () => setTiles(tilesId, "letter", i),
+      }));
+    }
+    return steps;
+  }
+
+  // ---------- 狀態與路由 ----------
+  const state = { tab: "search", stack: { search: [], book: [], quiz: [], settings: [] }, quiz: null, query: "", basicOnly: false, playing: false };
+  const top = () => state.stack[state.tab].at(-1);
+  function go(page) { Speech.stop(); state.playing = false; state.stack[state.tab].push(page); render(); window.scrollTo(0, 0); }
+  function back() { Speech.stop(); state.playing = false; state.stack[state.tab].pop(); render(); }
+  function openWord(w, from) {
+    const e = BY_LC.get(w.toLowerCase()); if (!e) return;
+    history = [e.w, ...history.filter(x => x !== e.w)].slice(0, 30); store.set("history", history);
+    go({ type: "word", w: e.w, from });
+  }
+
+  // ---------- 畫面 ----------
+  const app = document.getElementById("app");
+  function render() {
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === state.tab));
+    const p = top();
+    if (p?.type === "word") return renderWord(p);
+    if (p?.type === "list") return renderList(p);
+    if (p?.type === "quiz") return renderQuiz();
+    if (p?.type === "result") return renderResult();
+    if (state.tab === "search") return renderSearch();
+    if (state.tab === "book") return renderBook();
+    if (state.tab === "quiz") return renderQuizHome();
+    return renderSettings();
+  }
+
+  function bar(title, { backBtn = false, right = "" } = {}) {
+    return `<header class="topbar">${backBtn ? `<button class="iconbtn" id="back" aria-label="返回">‹</button>` : ""}<h1>${title}</h1>${right}</header>`;
+  }
+
+  // 查字
+  function search(q) {
+    q = q.trim().toLowerCase(); if (!q) return [];
+    const out = [];
+    const fi = FORMS[q];
+    const fe = fi != null ? WORDS[fi] : null;
+    if (fe) out.push({ e: fe, from: q });
+    const hits = WORDS.filter(e => e !== fe && e.lc.startsWith(q));
+    // 完全相同 → 基本字 → 字表內 → 短的字 → 常用的字
+    hits.sort((a, b) => (b.lc === q) - (a.lc === q) || (b.lv & 1) - (a.lv & 1) || (b.lv > 0) - (a.lv > 0)
+      || a.lc.length - b.lc.length || a.rank - b.rank);
+    hits.slice(0, 40).forEach(e => out.push({ e }));
+    return out;
+  }
+  // 找不到時：編輯距離 2 以內的字
+  function editDistance(a, b, max) {
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i), cur = new Array(b.length + 1);
+    for (let i = 1; i <= a.length; i++) {
+      cur[0] = i; let rowMin = i;
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (cur[j] < rowMin) rowMin = cur[j];
+      }
+      if (rowMin > max) return max + 1;
+      [prev, cur] = [cur, prev];
+    }
+    return prev[b.length];
+  }
+  function suggest(q) {
+    q = q.trim().toLowerCase(); if (q.length < 2) return [];
+    const hits = [];
+    for (const e of WORDS) {
+      if (Math.abs(e.lc.length - q.length) > 2) continue;
+      const d = editDistance(q, e.lc, 2);
+      if (d <= 2) hits.push([d, e]);
+    }
+    hits.sort((x, y) => x[0] - y[0] || (y[1].lv & 1) - (x[1].lv & 1) || (y[1].lv > 0) - (x[1].lv > 0) || x[1].rank - y[1].rank);
+    return hits.slice(0, 6).map(h => h[1]);
+  }
+  function rowHTML(e, extra = "", attrs = "") {
+    return `<button class="row" data-word="${esc(e.w)}" ${attrs}><span class="en">${esc(e.w)}</span><span class="zh">${extra || esc(e.zh)}</span>${badges(e.lv)}</button>`;
+  }
+  function renderSearch() {
+    app.innerHTML = `${bar("兒童英漢字典", { right: `${offlineReady ? `<span class="pill ok">✓ 可離線</span>` : ""}` })}
+      <div class="view">
+        <div class="search"><input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入英文單字" value="${esc(state.query)}"><button class="clear" id="clear" aria-label="清除" ${state.query ? "" : "hidden"}>✕</button></div>
+        <div id="results"></div>
+      </div>`;
+    const q = document.getElementById("q");
+    const paint = () => {
+      const box = document.getElementById("results");
+      document.getElementById("clear").hidden = !state.query;
+      if (!state.query.trim()) {
+        const recent = history.slice(0, 12);
+        box.innerHTML = `<div class="view">
+          ${recent.length ? `<div class="section-title">最近查過</div><div class="chips">${recent.map(w => `<button class="chip" data-word="${esc(w)}">${esc(w)}</button>`).join("")}</div>` : ""}
+          <div class="section-title">試試看</div>
+          <div class="chips">${["apple", "elephant", "beautiful", "went", "children", "ice cream", "Wednesday"].map(w => `<button class="chip" data-q="${esc(w)}">${esc(w)}</button>`).join("")}</div>
+          <p class="note">共收錄 ${WORDS.length.toLocaleString()} 個字：教育部 2000 字、全民英檢初級，以及常用 2 萬字。輸入變化形（例如 went、children）會自動找到原形。</p>
+        </div>`;
+        return;
+      }
+      const r = search(state.query);
+      box.innerHTML = r.length ? `<div class="list">${r.map(({ e, from }) => rowHTML(e, from ? `<span class="from">${esc(from)} → 原形</span>　${esc(e.zh)}` : "", from ? `data-from="${esc(from)}"` : "")).join("")}</div>`
+        : `<div class="list"><div class="empty">字典裡找不到「${esc(state.query)}」<br>檢查一下拼字，或少打幾個字母試試</div></div>${(() => {
+            const sug = suggest(state.query);
+            return sug.length ? `<div class="section-title" style="margin-top:12px">你是不是要找</div><div class="list">${sug.map(e => rowHTML(e)).join("")}</div>` : "";
+          })()}`;
+    };
+    q.addEventListener("input", () => { state.query = q.value; paint(); });
+    document.getElementById("clear").onclick = () => { state.query = ""; q.value = ""; paint(); q.focus(); };
+    app.onclick = ev => {
+      const t = ev.target.closest("[data-word],[data-q]"); if (!t) return;
+      if (t.dataset.q) { state.query = t.dataset.q; q.value = t.dataset.q; paint(); return; }
+      openWord(t.dataset.word, t.dataset.from);
+    };
+    paint();
+  }
+
+  // 單字詳情
+  function renderWord(p) {
+    const e = BY_LC.get(p.w.toLowerCase());
+    const fav = favs.includes(e.w);
+    const topics = e.t.map(id => TOPIC_BY_ID.get(id)).filter(Boolean);
+    app.innerHTML = `${bar("", { backBtn: true, right: `<button class="iconbtn ${fav ? "on" : ""}" id="fav" aria-label="${fav ? "取消收藏" : "收藏"}">${fav ? "★" : "☆"}</button>` })}
+      <div class="view">
+        <section class="hero">
+          <div class="word">${esc(e.w)}</div>
+          <div class="metaline">${e.ph ? `<span class="phon">/${esc(e.ph)}/</span>` : ""}${badges(e.lv)}</div>
+          ${p.from ? `<div class="inflect">你查的 <b>${esc(p.from)}</b> 是 <b>${esc(e.w)}</b> 的變化形</div>` : ""}
+          ${tilesHTML(e.w, "tiles")}
+          <div class="actions">
+            <button class="btn say" id="say"><span class="ico">🔊</span>發音</button>
+            <button class="btn slow" id="slow"><span class="ico">🐢</span>慢速</button>
+            <button class="btn spell" id="spell"><span class="ico">🔤</span>拼字母</button>
+            <button class="btn stop" id="stop" hidden>⏹ 停止</button>
+          </div>
+          <div class="speedrow"><span>拼字速度</span>${speedSeg("speedseg")}
+          </div>
+          <div class="speedrow"><span>拼幾遍</span>${repeatSeg("repeatseg")}</div>
+        </section>
+        <section class="card">
+          <div class="zh-main">${e.senses.length === 1 && e.senses[0][1] === e.zh ? `<span class="pos-inline">${esc(e.senses[0][0])}</span>` : ""}${esc(e.zh) || "（暫無中文）"}</div>
+          ${(e.senses.length === 1 && e.senses[0][1] === e.zh ? [] : e.senses).map(([pos, zh]) => `<div class="sense"><span class="pos">${esc(pos)}</span><span>${esc(zh)}</span></div>`).join("")}
+        </section>
+        ${topics.length ? `<div class="chips">${topics.map(t => `<button class="chip zh" data-topic="${t.id}">${t.emoji} ${esc(t.name)}</button>`).join("")}</div>` : ""}
+        ${e.forms ? `<details class="fold"><summary>變化形</summary><div class="inner"><div>${esc(e.forms)}</div></div></details>` : ""}
+        ${e.more.length ? `<details class="fold"><summary>更多意思</summary><div class="inner">${e.more.map(l => `<div>${esc(l)}</div>`).join("")}<div class="src">來源：ECDICT（簡轉繁）。意思比較多，給大人參考。</div></div></details>` : ""}
+      </div>`;
+    const stopBtn = document.getElementById("stop");
+    const done = () => { stopBtn.hidden = true; setTiles("tiles", "none"); };
+    const start = steps => { stopBtn.hidden = false; Speech.run(steps, done); };
+    document.getElementById("say").onclick = () => start([{ text: e.w, lang: settings.accent, rate: speed().rate, onStart: () => setTiles("tiles", "word") }]);
+    document.getElementById("slow").onclick = () => start([{ text: e.w, lang: settings.accent, rate: 0.6, onStart: () => setTiles("tiles", "word") }]);
+    document.getElementById("spell").onclick = () => start(spellSteps(e.w, "tiles"));
+    stopBtn.onclick = () => { Speech.stop(); done(); };
+    document.getElementById("back").onclick = back;
+    document.getElementById("fav").onclick = () => {
+      favs = fav ? favs.filter(x => x !== e.w) : [e.w, ...favs]; store.set("favs", favs);
+      const y = window.scrollY; render(); window.scrollTo(0, y);
+    };
+    bindSpeedSeg("speedseg");
+    bindRepeatSeg("repeatseg");
+    app.onclick = ev => { const t = ev.target.closest("[data-topic]"); if (t) { state.tab = "book"; state.stack.book = [{ type: "list", kind: "topic", id: +t.dataset.topic }]; Speech.stop(); render(); window.scrollTo(0, 0); } };
+  }
+
+  // 單字本
+  function topicWords(id) { return TOPIC_WORDS.get(id) || []; }
+  function topicTile(t) {
+    return `<button class="topic" data-topic="${t.id}"><span class="emo">${t.emoji}</span><span class="nm">${esc(t.name)}</span><span class="ct">${topicWords(t.id).length} 字</span></button>`;
+  }
+  function renderBook() {
+    const life = TOPICS.filter(t => t.group === "life"), gram = TOPICS.filter(t => t.group === "grammar");
+    app.innerHTML = `${bar("單字本")}
+      <div class="view">
+        <div class="section-title">生活主題</div>
+        <div class="grid">${life.map(topicTile).join("")}</div>
+        <details class="group"><summary>文法小類（${gram.length} 類）</summary><div class="grid small">${gram.map(topicTile).join("")}</div></details>
+        <div class="section-title">我的單字</div>
+        <div class="list">
+          <button class="row" data-kind="fav"><span class="en">⭐</span><span class="zh" style="color:var(--ink);font-weight:700">我的收藏</span><span class="pill">${favs.length}</span></button>
+          <button class="row" data-kind="history"><span class="en">🕘</span><span class="zh" style="color:var(--ink);font-weight:700">最近查過</span><span class="pill">${history.length}</span></button>
+          <button class="row" data-kind="mistakes"><span class="en">❌</span><span class="zh" style="color:var(--ink);font-weight:700">錯題本</span><span class="pill">${mistakes.length}</span></button>
+        </div>
+        <div class="section-title">字表</div>
+        <div class="list">${LEVELS.map(l => `<button class="row" data-kind="level" data-bit="${l.bit}"><span class="en">${l.emo}</span><span class="zh" style="color:var(--ink);font-weight:700">${l.name}<br><span class="note">${l.desc}</span></span><span class="pill">${WORDS.filter(e => e.lv & l.bit).length}</span></button>`).join("")}</div>
+      </div>`;
+    app.onclick = ev => {
+      const t = ev.target.closest("[data-topic],[data-kind]"); if (!t) return;
+      if (t.dataset.topic) go({ type: "list", kind: "topic", id: +t.dataset.topic });
+      else go({ type: "list", kind: t.dataset.kind, bit: +t.dataset.bit || 0 });
+    };
+  }
+
+  function listInfo(p) {
+    if (p.kind === "topic") { const t = TOPIC_BY_ID.get(p.id); return { emo: t.emoji, title: t.name, words: topicWords(p.id) }; }
+    if (p.kind === "level") { const l = LEVELS.find(l => l.bit === p.bit); return { emo: l.emo, title: l.name, words: SORTED.filter(e => e.lv & l.bit) }; }
+    if (p.kind === "fav") return { emo: "⭐", title: "我的收藏", words: favs.map(w => BY_LC.get(w.toLowerCase())).filter(Boolean) };
+    if (p.kind === "mistakes") return { emo: "❌", title: "錯題本", words: mistakes.map(w => BY_LC.get(w.toLowerCase())).filter(Boolean) };
+    return { emo: "🕘", title: "最近查過", words: history.map(w => BY_LC.get(w.toLowerCase())).filter(Boolean) };
+  }
+  function renderList(p) {
+    const info = listInfo(p);
+    const showFilter = p.kind === "topic" || p.kind === "level" && p.bit !== 1;
+    const words = state.basicOnly && showFilter ? info.words.filter(e => e.lv & 1) : info.words;
+    app.innerHTML = `${bar("", { backBtn: true })}
+      <div class="view">
+        <div class="listhead"><span class="emo">${info.emo}</span><div><div class="t">${esc(info.title)}</div><div class="s">${words.length} 個字</div></div></div>
+        <div class="toolbar">
+          <button class="tbtn primary" id="play" ${words.length ? "" : "disabled"}>▶︎ 連續播放</button>
+          <button class="tbtn" id="quizthis" ${words.length ? "" : "disabled"}>✍️ 測驗這組</button>
+          ${showFilter ? `<button class="tbtn ${state.basicOnly ? "on" : ""}" id="basic">${state.basicOnly ? "✓ " : ""}只看 🟢 基本</button>` : ""}
+        </div>
+        <div id="player" class="player" hidden></div>
+        <div class="list" id="rows">${words.length ? words.map(e => rowHTML(e)).join("") : `<div class="empty">${p.kind === "fav" ? "還沒有收藏的字。在單字頁按右上角 ☆ 就能收藏。" : "這裡還沒有字。"}</div>`}</div>
+        ${words.length ? `<p class="note">連續播放：每個字會「唸英文 → 拼字母 → 唸中文」，播完自動換下一個。</p>` : ""}
+      </div>`;
+    document.getElementById("back").onclick = back;
+    const basic = document.getElementById("basic");
+    document.getElementById("quizthis").onclick = () => { Speech.stop(); state.playing = false; startQuiz({ emo: info.emo, title: info.title, words }); };
+    if (basic) basic.onclick = () => { state.basicOnly = !state.basicOnly; Speech.stop(); state.playing = false; render(); };
+    const playBtn = document.getElementById("play"), player = document.getElementById("player");
+    const stopPlay = () => { Speech.stop(); state.playing = false; playBtn.textContent = "▶︎ 連續播放"; player.hidden = true; document.querySelectorAll(".row.playing").forEach(r => r.classList.remove("playing")); };
+    playBtn.onclick = () => {
+      if (state.playing) return stopPlay();
+      state.playing = true; playBtn.textContent = "⏹ 停止播放"; player.hidden = false;
+      const steps = [];
+      words.forEach((e, idx) => {
+        const sid = "ptiles";
+        const sp = spellSteps(e.w, sid, { sayWordFirst: true, pauseEnd: 0.6 });
+        const showWord = () => {
+          player.innerHTML = `<div class="pw">${esc(e.w)}</div>${tilesHTML(e.w, sid)}<div class="pz">${esc(e.zh)}</div><div class="note">${idx + 1} / ${words.length}</div>`;
+          document.querySelectorAll(".row.playing").forEach(r => r.classList.remove("playing"));
+          const row = document.querySelectorAll("#rows .row")[idx]; if (row) row.classList.add("playing");
+        };
+        const first = sp[0].onStart; sp[0].onStart = () => { showWord(); first(); };
+        steps.push(...sp);
+        if (e.zh) steps.push({ text: e.zh.replace(/[…、]/g, "，"), lang: "zh-TW", rate: 1, pause: 1.0, onStart: () => setTiles(sid, "none") });
+      });
+      Speech.run(steps, stopPlay);
+    };
+    document.getElementById("rows").onclick = ev => { const t = ev.target.closest("[data-word]"); if (t) { stopPlay(); openWord(t.dataset.word); } };
+  }
+
+
+  // ---------- 測驗 ----------
+  const QUIZ_SIZE = 10;
+  const QUIZ_TYPES = [
+    { key: "audio", label: "🔊 聽發音" },
+    { key: "zh", label: "📖 看中文" },
+    { key: "both", label: "🔊＋📖" },
+  ];
+  const normAnswer = s => String(s || "").toLowerCase().replace(/[’‘`]/g, "'").replace(/\s+/g, " ").trim();
+  const lettersOnly = s => normAnswer(s).replace(/[^\p{L}]/gu, "");
+  const isCorrect = (answer, word) => normAnswer(answer) === normAnswer(word) || (lettersOnly(answer) !== "" && lettersOnly(answer) === lettersOnly(word));
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function sayWord(w, slow) { Speech.run([{ text: w, lang: settings.accent, rate: slow ? 0.6 : speed().rate }]); }
+
+  // src = { emo, title, words }；replace=true 時取代目前頁面（從結果頁重考）
+  function startQuiz(src, replace = false) {
+    const pool = src.words.filter(e => [...e.w].some(isLetter));
+    if (!pool.length) return;
+    const picked = shuffle([...pool]).slice(0, QUIZ_SIZE);
+    state.quiz = { emo: src.emo, title: src.title, type: settings.quizType, hint: settings.quizHint, instant: settings.quizInstant,
+                   pool, items: picked.map(e => ({ e, answer: "" })), idx: 0, played: {} };
+    if (replace) state.stack[state.tab].pop();
+    go({ type: "quiz" });
+  }
+
+  function blanksHTML(word, typed) {
+    const t = [...(typed || "")].filter(isLetter);
+    let k = 0;
+    return [...word].map(ch => {
+      if (!isLetter(ch)) return `<span class="blank sym">${ch === " " ? "&nbsp;" : esc(ch)}</span>`;
+      const c = t[k++] || "";
+      return `<span class="blank${c ? " filled" : ""}">${esc(c)}</span>`;
+    }).join("");
+  }
+
+  function renderQuiz() {
+    const qz = state.quiz;
+    if (!qz) { state.stack[state.tab].pop(); return render(); }
+    const item = qz.items[qz.idx], e = item.e;
+    const last = qz.idx === qz.items.length - 1;
+    const showAudio = qz.type !== "zh", showZh = qz.type !== "audio";
+    const pos = e.senses.length === 1 ? `<span class="pos-inline">${esc(e.senses[0][0])}</span>` : "";
+    const count = [...e.w].filter(isLetter).length;
+    app.innerHTML = `${bar(`${qz.emo} ${esc(qz.title)}`, { backBtn: true })}
+      <div class="view">
+        <div class="quiz-top"><span>第 ${qz.idx + 1} / ${qz.items.length} 題</span>${qz.instant
+          ? `<span class="tally"><span class="ok">✓ ${qz.items.filter(it => it.checked && it.ok).length}</span>　<span class="no">✗ ${qz.items.filter(it => it.checked && !it.ok).length}</span></span>`
+          : `<span class="note">不限時間，慢慢想</span>`}</div>
+        <div class="progress"><div style="width:${(qz.idx / qz.items.length) * 100}%"></div></div>
+        <section class="quiz-prompt">
+          <div class="quiz-ask">${showZh ? "這個中文的英文怎麼拼？" : "聽聽看，這是哪個字？"}</div>
+          ${showZh ? `<div class="quiz-zh">${pos}${esc(e.zh)}</div>` : ""}
+          ${showAudio ? `<div class="quiz-audio">
+              <button class="btn say" id="qsay"><span class="ico">🔊</span>再聽一次</button>
+              <button class="btn slow" id="qslow"><span class="ico">🐢</span>慢速</button>
+            </div>` : ""}
+          ${qz.hint ? `<div class="blanks" id="blanks">${blanksHTML(e.w, item.answer)}</div><div class="hint">提示：${count} 個字母</div>` : ""}
+        </section>
+        <input id="ans" class="answer${item.checked ? (item.ok ? " good" : " bad") : ""}" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               enterkeyhint="${last ? "done" : "next"}" placeholder="在這裡拼出英文" value="${esc(item.answer)}" aria-label="輸入答案" ${item.checked ? "readonly" : ""}>
+        ${item.checked ? `<section class="feedback ${item.ok ? "good" : "bad"}" aria-live="polite">
+            <div class="fb-title">${item.ok ? "✓ 答對了！" : "✗ 差一點點"}</div>
+            ${item.ok ? "" : `<div class="yours">你寫：${item.answer.trim() ? `<s>${esc(item.answer.trim())}</s>` : "（沒有寫）"}</div>`}
+            <div class="fb-label">正確拼法</div>
+            ${tilesHTML(e.w, "fbtiles")}
+            <div class="fb-zh">${esc(e.zh)}</div>
+            <button class="tbtn" id="fbspell">🔤 再拼一次</button>
+          </section>` : ""}
+        <button class="btn spell next" id="next">${qz.instant && !item.checked ? "看答案 ✓" : last ? "完成，看結果 ✓" : "下一題 →"}</button>
+      </div>`;
+    const ans = document.getElementById("ans");
+    ans.addEventListener("input", () => {
+      item.answer = ans.value;
+      const box = document.getElementById("blanks"); if (box) box.innerHTML = blanksHTML(e.w, item.answer);
+    });
+    const spellAnswer = () => Speech.run(spellSteps(e.w, "fbtiles"), () => setTiles("fbtiles", "none"));
+    const nextQ = () => {
+      if (!item.checked) item.answer = ans.value;
+      Speech.stop();
+      if (qz.instant && !item.checked) {
+        item.checked = true;
+        item.ok = isCorrect(item.answer, e.w);
+        const y = window.scrollY;
+        render();
+        window.scrollTo(0, y);
+        // 答錯：逐字母拼一次；答對：唸一次整個字
+        if (item.ok) sayWord(e.w, false); else Speech.run(spellSteps(e.w, "fbtiles"), () => setTiles("fbtiles", "none"));
+        const nb = document.getElementById("next");
+        if (nb) {
+          const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          nb.scrollIntoView({ block: "end", behavior: smooth ? "smooth" : "auto" });
+          nb.focus({ preventScroll: true });
+        }
+        return;
+      }
+      if (last) return finishQuiz();
+      qz.idx++;
+      render();
+    };
+    ans.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); nextQ(); } });
+    document.getElementById("next").onclick = nextQ;
+    document.getElementById("back").onclick = () => { state.quiz = null; back(); };
+    if (showAudio) {
+      document.getElementById("qsay").onclick = () => sayWord(e.w, false);
+      document.getElementById("qslow").onclick = () => sayWord(e.w, true);
+      if (!qz.played[qz.idx] && !item.checked) { qz.played[qz.idx] = true; sayWord(e.w, false); }   // 每題出現時自動唸一次
+    }
+    app.onclick = null;
+    const fb = document.getElementById("fbspell");
+    if (fb) fb.onclick = spellAnswer;
+    if (!item.checked) { try { ans.focus({ preventScroll: true }); } catch {} }
+  }
+
+  function finishQuiz() {
+    const qz = state.quiz;
+    qz.items.forEach(it => { it.ok = isCorrect(it.answer, it.e.w); });
+    // 錯題本：答錯加入、答對移除
+    const wrong = qz.items.filter(it => !it.ok).map(it => it.e.w);
+    const right = new Set(qz.items.filter(it => it.ok).map(it => it.e.w));
+    mistakes = [...wrong, ...mistakes.filter(w => !wrong.includes(w) && !right.has(w))].slice(0, 200);
+    store.set("mistakes", mistakes);
+    state.stack[state.tab].pop();
+    state.stack[state.tab].push({ type: "result" });
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  function renderResult() {
+    const qz = state.quiz;
+    if (!qz) { state.stack[state.tab].pop(); return render(); }
+    const total = qz.items.length, n = qz.items.filter(it => it.ok).length;
+    const wrongWords = qz.items.filter(it => !it.ok).map(it => it.e);
+    const msg = n === total ? "🏆 全對！太厲害了" : n >= total * 0.8 ? "🌟 很棒！" : n >= total * 0.5 ? "👍 不錯，再加油" : "💪 多練習幾次就會了";
+    app.innerHTML = `${bar(`${qz.emo} ${esc(qz.title)}`, { backBtn: true })}
+      <div class="view">
+        <section class="score"><div class="num">${n} / ${total}</div><div class="msg">${msg}</div>
+          ${wrongWords.length ? `<div class="note">答錯的字已經放進「❌ 錯題本」，下次可以再考。</div>` : ""}</section>
+        <div class="stack">
+          ${wrongWords.length ? `<button class="btn spell" id="retrywrong">只考錯的 ${wrongWords.length} 題</button>` : ""}
+          <button class="tbtn" id="retry" style="justify-content:center">🔁 再考一次（換新題目）</button>
+        </div>
+        <div class="section-title">每一題</div>
+        <div class="list" id="resrows">${qz.items.map(it => `
+          <button class="row" data-word="${esc(it.e.w)}">
+            <span class="mark ${it.ok ? "ok" : "no"}">${it.ok ? "✓" : "✗"}</span>
+            <span class="res-main"><span class="en">${esc(it.e.w)}</span>
+              <span class="zh">${esc(it.e.zh)}</span>
+              ${it.ok ? "" : `<span class="yours">你寫：${it.answer.trim() ? `<s>${esc(it.answer.trim())}</s>` : "（沒有寫）"}</span>`}
+            </span>
+          </button>`).join("")}</div>
+        <p class="note">點任何一個字，可以聽發音、看它怎麼拼。</p>
+      </div>`;
+    document.getElementById("back").onclick = () => { state.quiz = null; back(); };
+    document.getElementById("retry").onclick = () => startQuiz({ emo: qz.emo, title: qz.title, words: qz.pool }, true);
+    const rw = document.getElementById("retrywrong");
+    if (rw) rw.onclick = () => startQuiz({ emo: qz.emo, title: `${qz.title}（錯題）`, words: wrongWords }, true);
+    app.onclick = ev => { const t = ev.target.closest("[data-word]"); if (t) openWord(t.dataset.word); };
+  }
+
+  // 測驗分頁：選題型、選範圍
+  function renderQuizHome() {
+    const life = TOPICS.filter(t => t.group === "life"), gram = TOPICS.filter(t => t.group === "grammar");
+    const mine = [
+      { kind: "history", emo: "🕘", title: "最近查過", n: history.length },
+      { kind: "fav", emo: "⭐", title: "我的收藏", n: favs.length },
+      { kind: "mistakes", emo: "❌", title: "錯題本", n: mistakes.length },
+    ];
+    app.innerHTML = `${bar("測驗")}
+      <div class="view">
+        <section class="card setting">
+          <label>題目怎麼出</label>
+          <div class="seg seg3" id="qtype">${QUIZ_TYPES.map(q => `<button data-qtype="${q.key}" class="${settings.quizType === q.key ? "on" : ""}">${q.label}</button>`).join("")}</div>
+          <label>字母數提示</label>
+          <div class="seg" id="qhint"><button data-qhint="1" class="${settings.quizHint ? "on" : ""}">顯示格子</button><button data-qhint="0" class="${settings.quizHint ? "" : "on"}">不顯示</button></div>
+          <label>什麼時候看對錯</label>
+          <div class="seg" id="qinstant"><button data-qinstant="0" class="${settings.quizInstant ? "" : "on"}">全部做完再看</button><button data-qinstant="1" class="${settings.quizInstant ? "on" : ""}">每題馬上看</button></div>
+          <div class="note">每組 ${QUIZ_SIZE} 題，不限時間。聽發音的題目可以一直重聽。選「每題馬上看」時，按「看答案」會先顯示對錯和正確拼法，答錯會拼一次給你聽，再按「下一題」繼續。</div>
+        </section>
+        <div class="section-title">從我的單字出題</div>
+        <div class="list">${mine.map(m => `<button class="row" data-kind="${m.kind}" ${m.n ? "" : "disabled"}><span class="en">${m.emo}</span><span class="zh" style="color:var(--ink);font-weight:700">${m.title}</span><span class="pill">${m.n}</span></button>`).join("")}</div>
+        <div class="section-title">從主題出題</div>
+        <div class="grid">${life.map(topicTile).join("")}</div>
+        <details class="group"><summary>文法小類（${gram.length} 類）</summary><div class="grid small">${gram.map(topicTile).join("")}</div></details>
+        <div class="section-title">從字表出題</div>
+        <div class="list">${LEVELS.map(l => `<button class="row" data-kind="level" data-bit="${l.bit}"><span class="en">${l.emo}</span><span class="zh" style="color:var(--ink);font-weight:700">${l.name}</span><span class="pill">${WORDS.filter(e => e.lv & l.bit).length}</span></button>`).join("")}</div>
+      </div>`;
+    app.onclick = ev => {
+      const qt = ev.target.closest("[data-qtype]");
+      if (qt) { settings.quizType = qt.dataset.qtype; saveSettings(); document.querySelectorAll("[data-qtype]").forEach(x => x.classList.toggle("on", x === qt)); return; }
+      const qh = ev.target.closest("[data-qhint]");
+      if (qh) { settings.quizHint = qh.dataset.qhint === "1"; saveSettings(); document.querySelectorAll("[data-qhint]").forEach(x => x.classList.toggle("on", x === qh)); return; }
+      const qi = ev.target.closest("[data-qinstant]");
+      if (qi) { settings.quizInstant = qi.dataset.qinstant === "1"; saveSettings(); document.querySelectorAll("[data-qinstant]").forEach(x => x.classList.toggle("on", x === qi)); return; }
+      const t = ev.target.closest("[data-topic],[data-kind]"); if (!t || t.disabled) return;
+      const desc = t.dataset.topic ? { kind: "topic", id: +t.dataset.topic } : { kind: t.dataset.kind, bit: +t.dataset.bit || 0 };
+      startQuiz(listInfo(desc));
+    };
+  }
+
+  // 設定
+  function renderSettings() {
+    const v = Speech.voiceFor(settings.accent);
+    app.innerHTML = `${bar("設定")}
+      <div class="view">
+        ${Speech.ok ? "" : `<div class="warn">這個瀏覽器不支援語音朗讀。請用 iPhone 的 Safari 打開這個頁面。</div>`}
+        <section class="card setting">
+          <label>口音</label>
+          <div class="seg"><button data-acc="en-US" class="${settings.accent === "en-US" ? "on" : ""}">美式 🇺🇸</button><button data-acc="en-GB" class="${settings.accent === "en-GB" ? "on" : ""}">英式 🇬🇧</button></div>
+          <div class="note">目前聲音：${v ? esc(v.name) : "系統預設"}</div>
+        </section>
+        <section class="card setting">
+          <label>拼字速度</label>
+          ${speedSeg("speedseg2")}
+          <label>拼幾遍</label>
+          ${repeatSeg("repeatseg2")}
+          <div class="note">預設是「中」、拼 1 遍。拼 2～3 遍時，每遍之間會停一下，方便孩子跟著唸。單字頁的「拼字母」下面也能直接切換。</div>
+          <label>字母唸法</label>
+          <div class="seg seg3"><button data-lm="lower" class="${settings.letterMode === "lower" ? "on" : ""}">a 小寫</button><button data-lm="upper" class="${settings.letterMode === "upper" ? "on" : ""}">A 大寫</button><button data-lm="name" class="${settings.letterMode === "name" ? "on" : ""}">字母名</button></div>
+          <div class="note">拼字母時如果聽到「capital」之類多餘的聲音，換一種唸法再試，選聽起來最乾淨的那一種。</div>
+          <button class="tbtn" id="test">🔤 用「apple」試聽</button>
+          <div class="tiles" id="ttiles" hidden></div>
+        </section>
+        <section class="card">
+          <b>加到主畫面</b>
+          <p class="note" style="margin:0">用 iPhone 的 Safari 打開這個網址 → 按下方的「分享」按鈕 → 選「加入主畫面」。之後從桌面圖示打開，就像一個 App。</p>
+          <p class="note" style="margin:0">${offlineReady ? `<span class="ok">✓ 已經可以離線使用</span>：沒有網路也能查字和發音。` : "第一次打開完成後，就能離線使用。"}</p>
+          <p class="note" style="margin:0">想要更自然的聲音：到 iPhone「設定 → 輔助使用 → 朗讀內容 → 聲音 → 英文」，下載「增強」語音。</p>
+          <p class="note" style="margin:0">收藏和最近查過只存在這支手機的這個瀏覽器裡。從主畫面圖示打開和從 Safari 打開，紀錄是分開的。</p>
+        </section>
+        <section class="card">
+          <b>資料來源</b>
+          <p class="note" style="margin:0">教育部「國民中小學英語文參考字彙」2000 字、國中單字王 2000 題庫（114 年版）、全民英檢初級字表（LTTC，僅標示級別）、<a href="https://github.com/skywind3000/ECDICT" target="_blank" rel="noopener">ECDICT</a> 開源英漢字典（MIT 授權，<a href="LICENSE-ECDICT.txt" target="_blank">授權條款</a>）。</p>
+          <p class="note" style="margin:0">版本 1.0　·　收錄 ${WORDS.length.toLocaleString()} 字</p>
+        </section>
+      </div>`;
+    app.onclick = ev => {
+      const lm = ev.target.closest("[data-lm]");
+      if (lm) { settings.letterMode = lm.dataset.lm; saveSettings(); const y = window.scrollY; render(); window.scrollTo(0, y); return; }
+      const b = ev.target.closest("[data-acc]"); if (!b) return;
+      settings.accent = b.dataset.acc; saveSettings(); render();
+    };
+    bindSpeedSeg("speedseg2");
+    bindRepeatSeg("repeatseg2");
+    document.getElementById("test").onclick = () => {
+      const box = document.getElementById("ttiles"); box.outerHTML = tilesHTML("apple", "ttiles");
+      Speech.run(spellSteps("apple", "ttiles"), () => setTiles("ttiles", "none"));
+    };
+  }
+
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+    Speech.stop(); state.playing = false;
+    if (state.tab === b.dataset.tab) state.stack[state.tab] = [];
+    state.tab = b.dataset.tab; render(); window.scrollTo(0, 0);
+  });
+  render();
+
+  // ---------- 離線 ----------
+  if ("serviceWorker" in navigator) {
+    try {
+      await navigator.serviceWorker.register("sw.js");
+      await navigator.serviceWorker.ready;
+      const hit = await caches.match(DATA_URL);
+      if (hit) { offlineReady = true; if (!top() && (state.tab === "settings" || (state.tab === "search" && document.activeElement?.id !== "q"))) render(); }
+    } catch {}
+  }
+})();
+</script>
+</body>
+</html>
