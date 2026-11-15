@@ -250,7 +250,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 (async () => {
   "use strict";
   const DATA_URL = "data/dict-v1.json";
-  const APP_VERSION = "1.2.1";   // 和 sw.js 的 VERSION 一致
+  const APP_VERSION = "1.2.2";   // 和 sw.js 的 VERSION 一致
   // ---------- 資料 ----------
   const app0 = document.getElementById("app");
   app0.innerHTML = `<div class="loading"><span class="big">📖</span>字典載入中…<br><span class="note">第一次打開需要下載約 1 MB，之後就能離線使用</span></div>`;
@@ -285,7 +285,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     get(k, d) { try { const v = localStorage.getItem("kd." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem("kd." + k, JSON.stringify(v)); } catch {} },
   };
-  const settings = Object.assign({ accent: "en-US", letterMode: "lower", speed: "mid", repeat: 1, quizType: "audio", quizHint: true, quizInstant: false }, store.get("settings", {}));
+  const settings = Object.assign({ accent: "en-US", letterMode: "lower", speed: "mid", repeat: 1, quizType: "audio", quizHint: true, quizInstant: false, voices: {} }, store.get("settings", {}));
   // 拼字速度三段：rate＝說話速度，pause＝字母之間停幾秒
   const SPEEDS = {
     slow: { label: "慢", rate: 0.8, pause: 0.45 },
@@ -325,12 +325,26 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     let voices = [], token = 0; const keep = [];
     const load = () => { if (ok) voices = speechSynthesis.getVoices(); };
     if (ok) { load(); speechSynthesis.addEventListener?.("voiceschanged", () => { load(); if (state.tab === "settings") render(); }); }
-    const BAD = /compact|eloquence|bells|bubbles|cellos|jester|organ|trinoids|whisper|zarvox|bad news|good news|boing|albert|fred|junior|ralph|kathy|superstar|wobble|grandma|grandpa|reed|rocko|sandy|shelley|flo|eddy/i;
+    // 搞怪音效聲音（羊叫 Bahh、泡泡、管風琴…）一律排除
+    const NOVELTY = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|eddy|flo|fred|grandma|grandpa|junior|kathy|ralph|reed|rocko|sandy|shelley)\b/i;
+    // 自動選擇時的偏好順序（孩子學英文咬字清楚的女聲優先）
+    const PREFERRED = ["ava", "zoe", "samantha", "allison", "susan", "nicky", "serena", "kate", "stephanie", "martha", "evan", "tom", "daniel", "arthur"];
+    const norm = v => v.lang.replace("_", "-");
+    const baseName = v => v.name.replace(/\s*[（(].*$/, "").trim();
+    const isNovelty = v => NOVELTY.test(baseName(v)) || /speech\.synthesis\.voice|eloquence/i.test(v.voiceURI || "");
+    // 0 標準、1 增強、2 高品質（iPhone / iPad 的品質寫在 voiceURI 裡）
+    const qualityOf = v => { const s = (v.voiceURI || "") + " " + v.name; return /premium|高品質/i.test(s) ? 2 : /enhanced|增強/i.test(s) ? 1 : 0; };
+    const QUALITY_LABEL = ["標準", "增強", "高品質"];
+    function voicesFor(lang) {
+      const pref = v => { const i = PREFERRED.indexOf(baseName(v).toLowerCase()); return i < 0 ? 99 : i; };
+      return voices.filter(v => norm(v) === lang && !isNovelty(v))
+        .sort((a, b) => qualityOf(b) - qualityOf(a) || pref(a) - pref(b) || a.name.localeCompare(b.name));
+    }
     function voiceFor(lang) {
-      const norm = v => v.lang.replace("_", "-");
-      const exact = voices.filter(v => norm(v) === lang);
-      const score = v => (/premium|高品質/i.test(v.name) ? 4 : 0) + (/enhanced|增強/i.test(v.name) ? 3 : 0) + (v.localService ? 1 : 0) + (BAD.test(v.name) ? -10 : 0);
-      return exact.sort((a, b) => score(b) - score(a))[0] || voices.find(v => norm(v).startsWith(lang.slice(0, 2))) || null;
+      const list = voicesFor(lang);
+      const chosen = (settings.voices || {})[lang];
+      if (chosen) { const v = list.find(v => v.voiceURI === chosen); if (v) return v; }
+      return list[0] || voices.find(v => norm(v).startsWith(lang.slice(0, 2)) && !isNovelty(v)) || null;
     }
     function run(steps, onDone) {
       stop();
@@ -354,7 +368,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       next();
     }
     function stop() { token++; if (ok) speechSynthesis.cancel(); }
-    return { ok, run, stop, voiceFor, list: () => voices };
+    return { ok, run, stop, voiceFor, voicesFor, qualityOf, QUALITY_LABEL, list: () => voices };
   })();
 
   // ---------- 小工具 ----------
@@ -839,7 +853,12 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <section class="card setting">
           <label>口音</label>
           <div class="seg"><button data-acc="en-US" class="${settings.accent === "en-US" ? "on" : ""}">美式 🇺🇸</button><button data-acc="en-GB" class="${settings.accent === "en-GB" ? "on" : ""}">英式 🇬🇧</button></div>
-          <div class="note">目前聲音：${v ? esc(v.name) : "系統預設"}</div>
+          <label>聲音</label>
+          <div class="list" id="voicelist">
+            <button class="row" data-voice=""><span class="mark ok">${(settings.voices || {})[settings.accent] ? "" : "✓"}</span><span class="zh" style="color:var(--ink);font-weight:700">自動選擇（推薦）</span><span class="pill">${v ? esc(v.name) : "系統預設"}</span></button>
+            ${Speech.voicesFor(settings.accent).map(x => `<button class="row" data-voice="${esc(x.voiceURI)}"><span class="mark ok">${(settings.voices || {})[settings.accent] === x.voiceURI ? "✓" : ""}</span><span class="zh" style="color:var(--ink);font-weight:700">${esc(x.name)}</span><span class="b ${Speech.qualityOf(x) ? "b1" : "b2"}">${Speech.QUALITY_LABEL[Speech.qualityOf(x)]}</span></button>`).join("")}
+          </div>
+          <div class="note">點一個聲音就會試唸「apple, a, p, p, l, e」。清單裡已經排除了 Bahh 這類搞怪聲音。下載新的聲音後，請把字典完全關掉再打開，清單才會出現。</div>
         </section>
         <section class="card setting">
           <label>拼字速度</label>
@@ -855,9 +874,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         </section>
         <section class="card">
           <b>加到主畫面</b>
-          <p class="note" style="margin:0">用 iPhone 的 Safari 打開這個網址 → 按下方的「分享」按鈕 → 選「加入主畫面」。之後從桌面圖示打開，就像一個 App。</p>
+          <p class="note" style="margin:0">用 iPhone 或 iPad 的 Safari 打開這個網址 → 按下方的「分享」按鈕 → 選「加入主畫面」。之後從桌面圖示打開，就像一個 App。</p>
           <p class="note" style="margin:0">${offlineReady ? `<span class="ok">✓ 已經可以離線使用</span>：沒有網路也能查字和發音。` : "第一次打開完成後，就能離線使用。"}</p>
-          <p class="note" style="margin:0">想要更自然的聲音：到 iPhone「設定 → 輔助使用 → 朗讀內容 → 聲音 → 英文」，下載「增強」語音。</p>
+          <p class="note" style="margin:0">想要更自然的聲音：到 iPhone 或 iPad「設定 → 輔助使用 → 朗讀內容 → 聲音 → 英文」，下載「高品質」或「增強」的聲音（推薦 Ava），再到上面的「聲音」選它。</p>
           <p class="note" style="margin:0">收藏和最近查過只存在這支手機的這個瀏覽器裡。從主畫面圖示打開和從 Safari 打開，紀錄是分開的。</p>
         </section>
         <section class="card">
@@ -871,6 +890,16 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     app.onclick = ev => {
       const lm = ev.target.closest("[data-lm]");
       if (lm) { settings.letterMode = lm.dataset.lm; saveSettings(); const y = window.scrollY; render(); window.scrollTo(0, y); return; }
+      const vb = ev.target.closest("[data-voice]");
+      if (vb) {
+        settings.voices = Object.assign({}, settings.voices, { [settings.accent]: vb.dataset.voice });
+        if (!vb.dataset.voice) delete settings.voices[settings.accent];
+        saveSettings();
+        const y = window.scrollY; render(); window.scrollTo(0, y);
+        Speech.run([{ text: "apple", lang: settings.accent, rate: speed().rate, pause: 0.4 },
+                    ...["a", "p", "p", "l", "e"].map(ch => ({ text: ch, lang: settings.accent, rate: speed().rate, pause: speed().pause }))]);
+        return;
+      }
       const b = ev.target.closest("[data-acc]"); if (!b) return;
       settings.accent = b.dataset.acc; saveSettings(); render();
     };
