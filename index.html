@@ -250,7 +250,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 (async () => {
   "use strict";
   const DATA_URL = "data/dict-v1.json";
-  const APP_VERSION = "1.2.2";   // 和 sw.js 的 VERSION 一致
+  const APP_VERSION = "1.2.3";   // 和 sw.js 的 VERSION 一致
   // ---------- 資料 ----------
   const app0 = document.getElementById("app");
   app0.innerHTML = `<div class="loading"><span class="big">📖</span>字典載入中…<br><span class="note">第一次打開需要下載約 1 MB，之後就能離線使用</span></div>`;
@@ -343,6 +343,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     function voiceFor(lang) {
       const list = voicesFor(lang);
       const chosen = (settings.voices || {})[lang];
+      if (chosen === "__system__") return null;   // 不指定聲音，交給 iPhone／iPad 的系統設定決定
       if (chosen) { const v = list.find(v => v.voiceURI === chosen); if (v) return v; }
       return list[0] || voices.find(v => norm(v).startsWith(lang.slice(0, 2)) && !isNovelty(v)) || null;
     }
@@ -855,10 +856,12 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
           <div class="seg"><button data-acc="en-US" class="${settings.accent === "en-US" ? "on" : ""}">美式 🇺🇸</button><button data-acc="en-GB" class="${settings.accent === "en-GB" ? "on" : ""}">英式 🇬🇧</button></div>
           <label>聲音</label>
           <div class="list" id="voicelist">
-            <button class="row" data-voice=""><span class="mark ok">${(settings.voices || {})[settings.accent] ? "" : "✓"}</span><span class="zh" style="color:var(--ink);font-weight:700">自動選擇（推薦）</span><span class="pill">${v ? esc(v.name) : "系統預設"}</span></button>
+            <button class="row" data-voice=""><span class="mark ok">${(settings.voices || {})[settings.accent] ? "" : "✓"}</span><span class="zh" style="color:var(--ink);font-weight:700">自動選擇</span><span class="pill">${(settings.voices || {})[settings.accent] === "__system__" ? "—" : (v ? esc(v.name) : "系統預設")}</span></button>
+            <button class="row" data-voice="__system__"><span class="mark ok">${(settings.voices || {})[settings.accent] === "__system__" ? "✓" : ""}</span><span class="zh" style="color:var(--ink);font-weight:700">使用 iPad／iPhone 設定裡選的聲音<br><span class="note">試試看能不能用到你下載的 Ava、Zoe</span></span></button>
             ${Speech.voicesFor(settings.accent).map(x => `<button class="row" data-voice="${esc(x.voiceURI)}"><span class="mark ok">${(settings.voices || {})[settings.accent] === x.voiceURI ? "✓" : ""}</span><span class="zh" style="color:var(--ink);font-weight:700">${esc(x.name)}</span><span class="b ${Speech.qualityOf(x) ? "b1" : "b2"}">${Speech.QUALITY_LABEL[Speech.qualityOf(x)]}</span></button>`).join("")}
           </div>
-          <div class="note">點一個聲音就會試唸「apple, a, p, p, l, e」。清單裡已經排除了 Bahh 這類搞怪聲音。下載新的聲音後，請把字典完全關掉再打開，清單才會出現。</div>
+          <div class="note">點一個聲音就會試唸「apple, a, p, p, l, e」。清單裡已經排除了 Bahh 這類搞怪聲音。</div>
+          <div class="note">注意：iPhone／iPad 的 Safari 不會把你自己下載的聲音（例如 Ava、Zoe）列給網頁。想用 Ava，請先到「設定 → 輔助使用 → 朗讀內容 → 聲音 → 英文 → 英文（美國）」把 Ava 打勾選為使用中的聲音，再選上面的「使用 iPad／iPhone 設定裡選的聲音」試聽。</div>
         </section>
         <section class="card setting">
           <label>拼字速度</label>
